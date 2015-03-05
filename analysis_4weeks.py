@@ -1,0 +1,89 @@
+import os 
+import string
+from array import * 
+import cfg
+import subprocess
+
+
+raa=array('f')
+decc=array('f')
+week=array('f')
+r=array('f')
+de=array('f')
+w=array('f')
+healpixx=array('f')
+healp=array('f')
+disty=array('f')
+distancey=array('f')
+datafile="%s/%s" %(cfg.home,cfg.thedatafile)
+weekk=array('f')
+distancee=array('f')
+
+with open(datafile) as source_file:
+    		for line in source_file:
+        		cols = string.split(line)
+        		
+           		try:
+				healpix=cols[cfg.healpixcol]
+				RA=cols[cfg.RA]
+				DEC=cols[cfg.DEC]
+				x=cols[cfg.x] #x is a string. e.g sig_match_sorted_073_076.dat
+				a,b,c,d,e=x.split('_')
+				firstweek=d #week the source appears appears
+				dist=cols[cfg.distance]
+				
+				
+			
+			except ValueError:
+                		print "Could not convert data to a float: ",line
+            		except IndexError:
+				print "What can I say ", line		
+			else:
+				
+				raa.append(float(RA))
+				decc.append(float(DEC))   #mind the reapeated letters in the ending. 
+				weekk.append(float(firstweek))
+				healpixx.append(float(healpix))
+				distancee.append(float(dist))
+				
+
+
+for j in range(0,len(raa)): # we do this loop to get rid of repeated info in the data file 
+	
+		
+	if j==0: #we start with this because the first datapoint in thedatafile is not repeated. Recall that the datafile contains things that appear and disappear. So they are on the list twice * See below for more details.
+		r.append(raa[j])
+		de.append(decc[j])
+		w.append(int(weekk[j]))
+		healp.append(healpixx[j])
+		distancey.append(distancee[j])
+	
+	if j!=0:
+		if int(healpixx[j])==int(healpixx[j-1]) and int(weekk[j])==int(weekk[j-1]):
+			print "Smile! You're on candid camera."
+		else:
+			r.append(raa[j])
+			de.append(decc[j])
+			w.append(int(weekk[j]))
+			healp.append(healpixx[j])
+			distancey.append(distancee[j])
+
+
+
+
+#Here you must qsub! ENJOY
+
+for j in range(0,len(healp)):
+
+	week2=w[j] + cfg.interval
+	identity="analysis_%d_%d_%d" %(healp[j],w[j],week2) 
+	
+	#print(['qsub','-N',identity,'-V','-b','y','-cwd','python','fermitute.py','%f' %healp[j],'%f' %r[j],'%f' %de[j],'%d' %w[j],'%d' %week2, '%f'%distancey[j]])
+	subprocess.call(['qsub','-N',identity,'-V','-b','y','-cwd','%s' %(cfg.pythoncommand),'fermitute.py','%f' %healp[j],'%f' %r[j],'%f' %de[j],'%d' %w[j],'%d' %week2, '%f'%distancey[j]])
+	#the above must be edited		
+
+
+
+#* eg:444140   sig_match_sorted_253_256.dat sig_match_sorted_249_252.dat   
+#     444140  sig_match_sorted_253_256.dat sig_match_sorted_257_260.dat 
+# Notice that weeks 253-256 are the weeks that the source appears. This source is repeated.

@@ -1,0 +1,38 @@
+import pyfits
+t = pyfits.open('lat_photon_weekly_w272_p202_v001_gti.fits')
+tbdata = t[1].data
+mask = tbdata.field('ENERGY') > 500 
+newtbdata = tbdata[mask]
+hdu = pyfits.BinTableHDU(data=newtbdata)
+hdu.writeto('newtable.fits')
+t = pyfits.open('newtable.fits')
+tbdata = t[1].data
+mask = tbdata.field('ZENITH_ANGLE') > 20 
+newtbdata = tbdata[mask]
+hdu = pyfits.BinTableHDU(data=newtbdata)
+hdu.writeto('newtable2.fits')
+
+'''
+header=pyfits.getheader('102813_132_50_w157_w160_region_filtered_gti.fits',1) 
+header.keys()
+
+
+TFields=header['TFIELDS']
+zenith=[]
+t=[]
+e=[]
+log10time=[]
+time10=[]
+l=[]
+for i in range(TFields):
+	x=i+1
+	TTYPE=header['TTYPE%d' %x]
+	print TTYPE
+	List.append(TTYPE)
+	if TTYPE=="ENERGY":
+		energy=tbdata.field("%s" %TTYPE)
+	if TTYPE=="ZENITH_ANGLE":
+		z=tbdata.field("%s" %TTYPE)
+	if TTYPE=="TIME":
+		time=tbdata.field("%s" %TTYPE)
+'''

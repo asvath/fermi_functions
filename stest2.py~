@@ -1,0 +1,85 @@
+import pyfits
+import os
+import cfg
+import subprocess
+
+def spacecraftfunc(healpix,ra,dec,week1,week2):
+				
+	if week1!=week2:
+		identity="%06d_%d_%d_w%03d_w%03d" %(healpix,ra,dec,week1,week2)
+		ltcube="%s/lat_ltcube_weekly_w%03d_w%03d_p203_v001.fits" %(cfg.home,week1,week2)
+	else:
+			identity="%06d_%d_%d_w%03d" %(healpix,ra,dec,week1)
+			ltcube="%s/lat_spacecraft_weekly_w%03d_p203_v001_ltcube.fits" %(cfg.home,week1)
+
+	
+	header=pyfits.getheader("%s" %(ltcube)) 
+	header.keys()
+
+	time=header['TSTART']
+	stop=header['TSTOP']
+
+	spacecraft="%s/lat_spacecraft_merged.fits" %(cfg.home)
+
+	print time
+	print stop
+	t = pyfits.open(spacecraft)
+	tbdata = t[1].data
+	mask = tbdata.field('START') > time 
+	newtbdata = tbdata[mask]
+	hdu = pyfits.BinTableHDU(data=newtbdata)
+	hdu.writeto('newstable_%s.fits' %(identity))
+	t = pyfits.open('newstable_%s.fits' %(identity))
+	tbdata = t[1].data
+	mask = tbdata.field('STOP') <stop 
+	newtbdata = tbdata[mask]
+	hdu = pyfits.BinTableHDU(data=newtbdata)
+	hdu.writeto('%s_newspacecraft.fits' %(identity))
+	os.remove('newstable_%s.fits' %(identity))
+	with open("%s_fits_output.log" % (identity),"a") as outputFile:
+		proc=subprocess.Popen(['cphead'],stdin=subprocess.PIPE,stdout=outputFile)
+		proc.communicate('%s+1\n\
+%s_newspacecraft.fits+1\n' %(spacecraft,identity))
+
+
+		
+		proc=subprocess.Popen(['fparkey'],stdin=subprocess.PIPE,stdout=outputFile)
+		proc.communicate('%s\n\
+%s_newspacecraft.fits+1\n\
+TSTART\n' %(time,identity))
+
+		proc=subprocess.Popen(['fparkey'],stdin=subprocess.PIPE,stdout=outputFile)
+		proc.communicate('%s\n\
+%s_newspacecraft.fits+1\n\
+TSTOP\n' %(stop,identity))
+
+
+		proc=subprocess.Popen(['fpartab'],stdin=subprocess.PIPE,stdout=outputFile)
+		proc.communicate('%s\n\
+%s_newspacecraft.fits+1\n\
+START\n\
+1\n' %(time,identity))
+
+
+		h=pyfits.getheader('%s_newspacecraft.fits' %(identity),1) 
+		h.keys()
+
+		noofrows=h['NAXIS2']
+		print noofrows
+	
+		proc=subprocess.Popen(['fpartab'],stdin=subprocess.PIPE,stdout=outputFile)
+		proc.communicate('%s\n\
+%s_newspacecraft.fits+1\n\
+START\n\
+%d\n' %(stop,identity,noofrows))
+
+
+
+if __name__ == "__main__":
+    import sys
+    spacecraftfunc(float(sys.argv[1]),float(sys.argv[2]),float(sys.argv[3]),int(sys.argv[4]),int(sys.argv[5]))
+
+
+#dimension: 30 col x 68230 rows
+
+#add additional data

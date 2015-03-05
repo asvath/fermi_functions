@@ -1,0 +1,44 @@
+import pyfits
+import os
+import cfg
+import subprocess
+import numpy
+
+def spacecraftfunc(week1,week2):
+				
+	if week1!=week2:
+		identity="w%03d_w%03d" %(week1,week2)
+		ltcube="%s/lat_ltcube_weekly_w%03d_w%03d_p203_v001.fits" %(cfg.home,week1,week2)
+	else:
+		print "HELLO"
+
+	
+	header=pyfits.getheader("%s" %(ltcube)) 
+	header.keys()
+
+	time=header['TSTART']
+	stop=header['TSTOP']
+
+	spacecraft="%s/lat_spacecraft_merged.fits" %(cfg.home)
+
+	print time
+	print stop
+	t = pyfits.open(spacecraft)
+	tbdata = t[1].data
+ 	mask = numpy.logical_and(numpy.array(tbdata.field('START')) > time,numpy.array(tbdata.field('STOP')) <stop)
+	tbdata = tbdata[mask]
+	tbdata.field('START')[0]=time
+	tbdata.field('STOP')[-1]=stop
+
+	t[0].header['TSTART']=time
+	t[0].header['TSTOP']=stop
+	t[1].header['TSTART']=time
+	t[1].header['TSTOP']=stop
+	pyfits.HDUList([pyfits.PrimaryHDU(header=t[0].header),
+			pyfits.BinTableHDU(data=tbdata,header=t[1].header,name='SC_DAT')]).writeto('newstable_%s.fits' %(identity))
+#	writeto('%s_newspacecraft.fits' %(identity))
+
+if __name__ == "__main__":
+    import sys
+    spacecraftfunc(int(sys.argv[1]),int(sys.argv[2]))
+
