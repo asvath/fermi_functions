@@ -23,8 +23,8 @@ def fermitutefunc(healpix,ra,dec,week1,week2,distance):
 		
 	
 	
-	#gtselectfunc(healpix,ra,dec,week1,week2)
-	#gtexpmapcallfunc(healpix,ra,dec,week1,week2)
+	gtselectfunc(healpix,ra,dec,week1,week2)
+	gtexpmapcallfunc(healpix,ra,dec,week1,week2)
 	#genxmlfunc(healpix,ra,dec,week1,week2)
 	#makexmlfunc(healpix,ra,dec,week1,week2,distance)	
 	gtlikecallfunc(healpix,ra,dec,week1,week2)
